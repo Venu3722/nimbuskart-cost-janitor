@@ -1,49 +1,51 @@
-Cost Janitor – Cloud Cost Hygiene Simulation Project
-Project Overview
+# Cost Janitor – Cloud Cost Hygiene Simulation Project
 
-Cost Janitor is a lightweight cloud cost hygiene simulation project designed to identify unused, orphaned, or improperly tagged cloud resources.
-
-The project demonstrates practical DevOps and SRE concepts using:
-
-Terraform
-LocalStack
-Python
-GitHub Actions
+## Project Overview
+**Cost Janitor** is a lightweight cloud cost hygiene simulation project designed to identify unused, orphaned, or improperly tagged cloud resources. The project demonstrates practical DevOps and SRE concepts using:
+* Terraform
+* LocalStack
+* Python
+* GitHub Actions
 
 Instead of provisioning infrastructure in a real AWS account, the project uses LocalStack to simulate AWS services locally and safely.
 
-The primary goal is to showcase:
+### Primary Goals
+* Showcase Infrastructure as Code (IaC) principles.
+* Demonstrate cloud governance and automation workflows.
+* Implement cost optimization strategies.
+* Integrate CI/CD security and compliance checks.
+* Practice safe cleanup design patterns.
 
-Infrastructure as Code (IaC)
-cloud governance concepts
-automation workflows
-cost optimization strategies
-CI/CD integration
-safe cleanup design patterns
-Why Cost Hygiene Matters
+---
 
-Cloud environments often accumulate unused or forgotten resources over time.
+## Why Cost Hygiene Matters
+Cloud environments often accumulate unused or forgotten resources over time. Examples include:
+* Unattached storage volumes
+* Stopped virtual machines
+* Unused public IPs
+* Improperly tagged resources
 
-Examples include:
+These resources increase operational cost, reduce visibility, and create governance challenges. This project demonstrates how automated scanning workflows can help identify such issues before they become production-scale problems.
 
-unattached storage volumes
-stopped virtual machines
-unused public IPs
-improperly tagged resources
+---
 
-These resources increase operational cost, reduce visibility, and create governance challenges.
+## Technology Stack
 
-This project demonstrates how automated scanning workflows can help identify such issues before they become production-scale problems.
 
-Technology Stack
-Component	Purpose
-Terraform	Infrastructure provisioning
-LocalStack	Local AWS cloud simulation
-Python	Cost hygiene scanning logic
-boto3	AWS SDK for Python
-GitHub Actions	CI/CD automation
-Markdown/JSON Reports	Scan reporting
-High-Level Architecture
+| Component | Purpose |
+| :--- | :--- |
+| **Terraform** | Infrastructure provisioning |
+| **LocalStack** | Local AWS cloud simulation |
+| **Python** | Cost hygiene scanning logic |
+| **Boto3** | AWS SDK for Python |
+| **GitHub Actions** | CI/CD automation |
+| **Markdown/JSON** | Scan reporting |
+
+---
+
+## High-Level Architecture
+
+
 Terraform
     ↓
 LocalStack Infrastructure
@@ -53,7 +55,9 @@ Python Cost Janitor Scan
 Generated Reports
     ↓
 GitHub Actions Artifact Upload
-Project Structure
+
+## Project Structure
+
 project-root/
 │
 ├── terraform/
@@ -81,7 +85,8 @@ project-root/
 │       └── cost-janitor.yml
 │
 └── README.md
-Infrastructure Overview
+
+**Infrastructure Overview**
 
 Terraform provisions the following simulated AWS resources inside LocalStack:
 
