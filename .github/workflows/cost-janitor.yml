@@ -61,8 +61,7 @@ jobs:
 
       - name: Execute Cost Janitor Core Audit
         run: |
-          cd janitor
-          python janitor.py --dry-run
+          python janitor/janitor.py --dry-run
 
       - name: Upload Clean-up Audit Artifacts
         if: always()
