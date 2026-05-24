@@ -11,90 +11,85 @@ permissions:
   contents: read
 
 jobs:
-cost-hygiene-scan:
-runs-on: ubuntu-latest
+  cost-hygiene-scan:
+    runs-on: ubuntu-latest
 
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
 
-env:
-  AWS_ACCESS_KEY_ID: test
-  AWS_SECRET_ACCESS_KEY: test
-  AWS_DEFAULT_REGION: us-east-1
+    services:
+      localstack:
+        image: localstack/localstack:4.4.0
+        ports:
+          - 4566:4566
 
-services:
-  localstack:
-    image: localstack/localstack:3.5
-    ports:
-      - 4566:4566
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
 
-steps:
-  - name: Checkout Source Code
-    uses: actions/checkout@v4
+      - name: Set Up Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-  - name: Set Up Python Runtime
-    uses: actions/setup-python@v5
-    with:
-      python-version: "3.11"
-      cache: "pip"
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r janitor/requirements.txt
+          pip install terraform-local
 
-  - name: Install Python Dependencies
-    run: |
-      python -m pip install --upgrade pip
-      pip install -r janitor/requirements.txt
-      pip install terraform-local
+      - name: Setup Terraform Binary
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
 
-  - name: Setup Terraform Binary
-    uses: hashicorp/setup-terraform@v3
-    with:
-      terraform_version: "1.7.0"
+      - name: Wait for LocalStack
+        run: |
+          for i in {1..20}; do
+            curl -s http://localhost:4566/_localstack/health && break
+            sleep 5
+          done
 
-  - name: Wait for LocalStack
-    run: |
-      for i in {1..20}; do
-        curl http://localhost:4566/_localstack/health && break
-        sleep 5
-      done
+      - name: Initialize and Apply Terraform Baseline
+        run: |
+          cd terraform
+          tflocal init
+          tflocal apply -auto-approve
 
-  - name: Initialize and Apply Terraform Baseline
-    run: |
-      cd terraform
-      tflocal init
-      tflocal apply -auto-approve
+      - name: Execute Cost Janitor Core Audit
+        run: |
+          cd janitor
+          python janitor.py --dry-run
 
-  - name: Execute Cost Janitor Core Audit
-    run: |
-      cd janitor
-      python janitor.py --dry-run
+      - name: Upload Clean-up Audit Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cost-hygiene-reports
+          path: |
+            janitor/report.json
+            janitor/report.md
 
-  - name: Upload Clean-up Audit Artifacts
-    if: always()
-    uses: actions/upload-artifact@v4
-    with:
-      name: cost-hygiene-reports
-      path: |
-        janitor/report.json
-        janitor/report.md
+      - name: Publish Markdown Summary Report to Pull Request
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('janitor/report.md', 'utf8');
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
 
-  - name: Publish Markdown Summary Report to Pull Request
-    if: failure()
-    uses: actions/github-script@v7
-    with:
-      script: |
-        const fs = require('fs');
-
-        const report = fs.readFileSync(
-          'janitor/report.md',
-          'utf8'
-        );
-
-        github.rest.issues.createComment({
-          issue_number: context.issue.number,
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          body: report
-        });
-
-  - name: Enforce Branch Rules Post Execution
-    if: failure()
-    run: |
-      echo "❌ Orphaned infrastructure resources detected! Please fix before merge."
-      exit 1
+      - name: Enforce Branch Rules Post Execution
+        if: failure()
+        run: |
+          echo "❌ Orphaned infrastructure resources detected! Please fix before merge."
+          exit 1
