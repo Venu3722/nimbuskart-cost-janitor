@@ -10,7 +10,6 @@ jobs:
 cost-hygiene-scan:
 runs-on: ubuntu-latest
 
-```
 env:
   AWS_ACCESS_KEY_ID: test
   AWS_SECRET_ACCESS_KEY: test
@@ -87,4 +86,4 @@ steps:
     run: |
       echo "❌ Orphaned infrastructure resources detected! Please fix before merge."
       exit 1
-```
+
